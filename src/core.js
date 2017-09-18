@@ -1,5 +1,6 @@
 var Support = require('./support');
 var CanvasRenderer = require('./renderers/canvas');
+var ExtraLargeCanvasRenderer = require('./renderers/extralargecanvas');
 var ImageLoader = require('./imageloader');
 var NodeParser = require('./nodeparser');
 var NodeContainer = require('./nodecontainer');
@@ -21,11 +22,12 @@ function html2canvas(nodeList, options) {
     }
 
     options.async = typeof(options.async) === "undefined" ? true : options.async;
+    options.usesCanvasElements = typeof(options.usesCanvasElements) === "undefined" ? false : options.usesCanvasElements;
     options.allowTaint = typeof(options.allowTaint) === "undefined" ? false : options.allowTaint;
     options.removeContainer = typeof(options.removeContainer) === "undefined" ? true : options.removeContainer;
     options.javascriptEnabled = typeof(options.javascriptEnabled) === "undefined" ? false : options.javascriptEnabled;
     options.imageTimeout = typeof(options.imageTimeout) === "undefined" ? 10000 : options.imageTimeout;
-    options.renderer = typeof(options.renderer) === "function" ? options.renderer : CanvasRenderer;
+    options.renderer = typeof(options.renderer) === "function" ? options.renderer : ExtraLargeCanvasRenderer;
     options.strict = !!options.strict;
 
     if (typeof(nodeList) === "string") {
@@ -94,12 +96,22 @@ function renderWindow(node, container, options, windowWidth, windowHeight) {
     return parser.ready.then(function() {
         log("Finished rendering");
         var canvas;
+        var canvasElems;
 
         if (options.type === "view") {
             canvas = crop(renderer.canvas, {width: renderer.canvas.width, height: renderer.canvas.height, top: 0, left: 0, x: 0, y: 0});
-        } else if (node === clonedWindow.document.body || node === clonedWindow.document.documentElement || options.canvas != null) {
+        }
+        else if (node === clonedWindow.document.body || node === clonedWindow.document.documentElement || options.canvas != null) {
             canvas = renderer.canvas;
-        } else if (options.scale) {
+        }
+        else if (options.usesCanvasElements===true){ //used by wrapped-canvas.js to have unlimited size canvas/cross-browser (larger pdf documents for example)
+                var theContextCanvas = renderer.ctx.canvas;
+                canvas = theContextCanvas;
+                //TODO Should we crop?
+                //canvas = crop(renderer.canvas, {width:  options.width != null ? options.width : bounds.width, height: options.height != null ? options.height : bounds.height, top: bounds.top, left: bounds.left, x: 0, y: 0});
+
+        }
+        else if (options.scale) {
             var origBounds = {width: options.width != null ? options.width : bounds.width, height: options.height != null ? options.height : bounds.height, top: bounds.top, left: bounds.left, x: 0, y: 0};
             var cropBounds = {};
             for (var key in origBounds) {
@@ -108,12 +120,21 @@ function renderWindow(node, container, options, windowWidth, windowHeight) {
             canvas = crop(renderer.canvas, cropBounds);
             canvas.style.width = origBounds.width + 'px';
             canvas.style.height = origBounds.height + 'px';
-        } else {
+        }
+
+        else {
             canvas = crop(renderer.canvas, {width:  options.width != null ? options.width : bounds.width, height: options.height != null ? options.height : bounds.height, top: bounds.top, left: bounds.left, x: 0, y: 0});
         }
 
-        cleanupContainer(container, options);
-        return canvas;
+        if(options.usesCanvasElements===true){
+            cleanupContainer(container, options);
+            return canvas;
+        }
+        else{
+            cleanupContainer(container, options);
+            return canvas;
+        }
+
     });
 }
 
