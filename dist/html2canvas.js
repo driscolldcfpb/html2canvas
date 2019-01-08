@@ -1,7 +1,7 @@
 /*
   html2canvas 0.5.0-beta4 <http://html2canvas.hertzen.com>
-  Copyright (c) 2017 Niklas von Hertzen
-  2017-10-18 Custom build by Erik Koopmans, featuring latest bugfixes and features
+  Copyright (c) 2019 Niklas von Hertzen
+  2019-01-08 Custom build by Erik Koopmans, featuring latest bugfixes and features
 
   Released under MIT License
 */
@@ -4121,7 +4121,8 @@ BrowserIndependentContext.prototype.fillText = function(text, startX, startY, ma
 	var endOfText = this.heightOfFont(this.font);
 	var canvas1 = this.canvas.getCanvasAtHeight(startY); 				//first canvas that will receive text
 	var canvas2 = this.canvas.getCanvasAtHeight(startY + endOfText);	//last canvas that will receive text
-	if (canvas1 == canvas2) {
+
+    if (canvas1 == canvas2 || canvas2 === undefined) {
 		//the text does not straddle more than one canvas; draw it as text
 		this.applySettings(canvas1.context);
 		if (maxWidth) {
