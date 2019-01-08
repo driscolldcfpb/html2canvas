@@ -138,7 +138,8 @@ BrowserIndependentContext.prototype.fillText = function(text, startX, startY, ma
 	var endOfText = this.heightOfFont(this.font);
 	var canvas1 = this.canvas.getCanvasAtHeight(startY); 				//first canvas that will receive text
 	var canvas2 = this.canvas.getCanvasAtHeight(startY + endOfText);	//last canvas that will receive text
-	if (canvas1 == canvas2) {
+
+    if (canvas1 == canvas2 || canvas2 === undefined) {
 		//the text does not straddle more than one canvas; draw it as text
 		this.applySettings(canvas1.context);
 		if (maxWidth) {
